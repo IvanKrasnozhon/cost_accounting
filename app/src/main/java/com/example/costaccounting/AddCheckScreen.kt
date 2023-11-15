@@ -2,7 +2,6 @@ package com.example.costaccounting
 
 import android.app.DatePickerDialog
 import android.os.Build
-import android.util.Log
 import android.widget.DatePicker
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -42,7 +41,6 @@ import androidx.navigation.NavController
 import com.example.costaccounting.ui.theme.buttonTextStyle
 import com.example.costaccounting.ui.theme.placeholderTextStyle
 import com.example.costaccounting.ui.theme.textFieldTextStyle
-import java.time.LocalDate
 import java.util.Calendar
 import java.util.Date
 
@@ -53,26 +51,22 @@ fun AddCheckScreen(navController: NavController, costAccounting: CostAccounting)
     val radioOptions = costAccounting.getCategories()
     var selectedOption by remember { mutableStateOf(radioOptions[0]) }
 
-// Fetching the Local Context
-    val mContext = LocalContext.current
+    val checkController  = CheckController()
 
-    // Declaring integer values
-    // for year, month and day
-    val mYear: Int
-    val mMonth: Int
-    val mDay: Int
+    // Fetching the Local Context
+    val mContext = LocalContext.current
 
     // Initializing a Calendar
     val mCalendar = Calendar.getInstance()
 
-    // Fetching current year, month and day
-    mYear = mCalendar.get(Calendar.YEAR)
-    mMonth = mCalendar.get(Calendar.MONTH)
-    mDay = mCalendar.get(Calendar.DAY_OF_MONTH)
+    // Declaring integer values
+    // for year, month and day
+    val mYear: Int = mCalendar.get(Calendar.YEAR)
+    val mMonth: Int = mCalendar.get(Calendar.MONTH)
+    val mDay: Int = mCalendar.get(Calendar.DAY_OF_MONTH)
 
     mCalendar.time = Date()
 
-    var dstr = ""
     // Declaring a string value to
     // store date in string format
     val mDate = remember { mutableStateOf("") }
@@ -83,11 +77,9 @@ fun AddCheckScreen(navController: NavController, costAccounting: CostAccounting)
         mContext,
         { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
             mDate.value = "$mDayOfMonth/${mMonth + 1}/$mYear"
-            dstr = "$mDayOfMonth*${mMonth + 1}*$mYear"
         },
         mYear, mMonth, mDay,
     )
-
 
     Column(
         modifier = Modifier
@@ -171,20 +163,8 @@ fun AddCheckScreen(navController: NavController, costAccounting: CostAccounting)
 
         Button(
             onClick = {
-
-                val tempDate = mDate.value.split('/')
-                Log.d("datepicker", dstr)
-                costAccounting.addCheck(
-                    selectedOption,
-                    check.text.toFloat(),
-                    LocalDate.of(
-                        tempDate[2].toInt(),
-                        tempDate[1].toInt(),
-                        tempDate[0].toInt()
-                    )
-                )
+                checkController.addCheck(mDate.value, costAccounting, selectedOption, check)
                 check = TextFieldValue("")
-
             },
             Modifier
                 .height(90.dp)
@@ -223,3 +203,4 @@ fun AddCheckScreen(navController: NavController, costAccounting: CostAccounting)
         }
     }
 }
+

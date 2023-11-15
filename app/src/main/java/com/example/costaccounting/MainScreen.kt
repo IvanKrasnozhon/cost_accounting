@@ -1,7 +1,5 @@
 package com.example.costaccounting
 
-import DictionaryEntry
-import DictionaryEntryItem
 import android.annotation.SuppressLint
 import android.os.Build
 import android.util.Log
@@ -47,7 +45,6 @@ import java.time.LocalDate
 fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
     var currentExpenses by remember { mutableStateOf(costAccounting.getWeeklyExpenses(LocalDate.of(2023, 11, 10))) }
     var totalSum: Float by remember { mutableFloatStateOf(currentExpenses.values.sum()) }
-    var temp = costAccounting.getWeeklyExpenses(LocalDate.of(2023, 11, 10))
 
     Column(
         modifier = Modifier
@@ -59,7 +56,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
         ) {
 
         Text(
-            text = "$" + totalSum,
+            text = "$$totalSum",
             modifier = Modifier
                 .width(474.dp)
                 .height(77.dp),
@@ -126,7 +123,6 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
             items(currentExpenses.entries.toList()) { (category, value) ->
                 val dictionaryEntry = DictionaryEntry(category, value)
                 DictionaryEntryItem(dictionaryEntry)
-                Log.d("INSERT", "$category: $value")
             }
         }
         Spacer(Modifier.height(20.dp))

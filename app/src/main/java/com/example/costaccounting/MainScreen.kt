@@ -1,8 +1,8 @@
 package com.example.costaccounting
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,30 +21,26 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.costaccounting.ui.theme.buttonTextStyle
 import com.example.costaccounting.ui.theme.mainTextStyle
-import java.time.LocalDate
-
 
 
 @SuppressLint("MutableCollectionMutableState")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
-    var currentExpenses by remember { mutableStateOf(costAccounting.getWeeklyExpenses(LocalDate.of(2023, 11, 10))) }
-    var totalSum: Float by remember { mutableFloatStateOf(currentExpenses.values.sum()) }
+    val mainScreenViewModel = remember { MainScreenViewModel(costAccounting) }
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     Column(
         modifier = Modifier
@@ -56,7 +52,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
         ) {
 
         Text(
-            text = "$$totalSum",
+            text = "$${mainScreenViewModel.totalSum.floatValue}",
             modifier = Modifier
                 .width(474.dp)
                 .height(77.dp),
@@ -69,8 +65,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
         Row {
             Button(
                 onClick = {
-                    currentExpenses = costAccounting.getWeeklyExpenses(LocalDate.of(2023, 11, 10))
-                    totalSum = currentExpenses.values.sum()
+                    mainScreenViewModel.changeExpenses()
                 },
                 Modifier
                     .height(90.dp)
@@ -79,28 +74,17 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
                 shape = RoundedCornerShape(size = 15.dp),
 
                 ) {
-                Text(text = "Week", style = buttonTextStyle)
-
-            }
-
-            Spacer(Modifier.width(20.dp))
-
-            Button(
-                onClick = {
-                    currentExpenses = costAccounting.getMonthlyExpenses(LocalDate.of(2023, 11, 10))
-                    totalSum = currentExpenses.values.sum()
-                },
-                Modifier
-                    .height(90.dp)
-                    .weight(0.45f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA6262)),
-                shape = RoundedCornerShape(size = 15.dp)
-            ) {
-                Text(text = "Month", style = buttonTextStyle)
+                Text(text = "Current period: ${mainScreenViewModel.expensesPeriod.value}", style = buttonTextStyle)
             }
         }
 
         Spacer(Modifier.height(20.dp))
+
+        val columnWidth = if(isPortrait) {
+            548.dp
+        } else {
+            1000.dp
+        }
 
         LazyColumn(
             modifier = Modifier
@@ -109,7 +93,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
                     spotColor = Color(0xFF123123),
                     ambientColor = Color(0xFF123123)
                 )
-                .width(548.dp)
+                .width(columnWidth)
                 .height(503.dp)
                 .background(
                     color = Color(0xFFFFFFFF),
@@ -118,9 +102,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
                 .padding(19.dp, 17.dp)
 
         ) {
-            Log.d("MAP_INFO", "${currentExpenses.size}")
-
-            items(currentExpenses.entries.toList()) { (category, value) ->
+            items(mainScreenViewModel.currentExpenses.value.entries.toList()) { (category, value) ->
                 val dictionaryEntry = DictionaryEntry(category, value)
                 DictionaryEntryItem(dictionaryEntry)
             }

@@ -1,11 +1,13 @@
 package com.example.costaccounting
 
 import android.os.Build
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.time.LocalDate
 
-public open class CostAccounting() {
+public open class CostAccounting() : Parcelable {
     private var categoryExpenses = mutableMapOf(
         "Food" to 0f,
         "Public utilities" to 0f,
@@ -29,6 +31,11 @@ public open class CostAccounting() {
         LocalDate.of(2023, 11, 9) to mutableListOf<String>("Others*60.2"),
         LocalDate.of(2023, 11, 10) to mutableListOf<String>("Food*70.2"),
     )
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    constructor(parcel: Parcel) : this() {
+        readFromParcel(parcel)
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     public fun getExpensesMap(): MutableMap<LocalDate, MutableList<String>> {
@@ -59,10 +66,11 @@ public open class CostAccounting() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getWeeklyExpenses(currentDate: LocalDate): MutableMap<String, Float> {
+    fun getWeeklyExpenses(): MutableMap<String, Float> {
         val weekExpenses = mutableMapOf<String, Float>()
         val daysInWeek = 7
         val today = LocalDate.now()
+        val currentDate = LocalDate.now()
 
         for (i in 0 until daysInWeek) {
             val date = currentDate.minusDays(i.toLong())
@@ -75,12 +83,18 @@ public open class CostAccounting() {
                 }
             }
         }
+
+        // Виводимо дані для відстеження
+        println("getWeeklyExpenses for $currentDate: $weekExpenses")
+
         return weekExpenses
     }
 
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getMonthlyExpenses(currentDate: LocalDate): MutableMap<String, Float> {
+    fun getMonthlyExpenses(): MutableMap<String, Float> {
         val monthExpenses = mutableMapOf<String, Float>()
+        val currentDate = LocalDate.now()
         val daysInMonth = currentDate.month.length(currentDate.isLeapYear)
 
         for (i in 0 until daysInMonth) {
@@ -94,5 +108,32 @@ public open class CostAccounting() {
         }
 
         return monthExpenses
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeMap(categoryExpenses)
+        dest.writeMap(expenses)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun readFromParcel(parcel: Parcel) {
+        categoryExpenses = parcel.readHashMap(Float::class.java.classLoader) as MutableMap<String, Float>
+        expenses = parcel.readHashMap(String::class.java.classLoader) as MutableMap<LocalDate, MutableList<String>>
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<CostAccounting> {
+        @RequiresApi(Build.VERSION_CODES.O)
+        override fun createFromParcel(parcel: Parcel): CostAccounting {
+            return CostAccounting(parcel)
+        }
+
+        override fun newArray(size: Int): Array<CostAccounting?> {
+            return arrayOfNulls(size)
+        }
     }
 }

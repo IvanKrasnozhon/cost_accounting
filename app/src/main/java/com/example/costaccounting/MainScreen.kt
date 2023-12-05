@@ -21,7 +21,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -38,7 +43,11 @@ import com.example.costaccounting.ui.theme.mainTextStyle
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
-    val mainScreenViewModel = remember { MainScreenViewModel(costAccounting) }
+    val mainScreenViewModel by remember { mutableStateOf(MainScreenViewModel(costAccounting)) }
+    var buttonPeriod by rememberSaveable { mutableStateOf(mainScreenViewModel.expensesPeriod.value)}
+    var totalExpenses by rememberSaveable {
+        mutableFloatStateOf(mainScreenViewModel.totalSum.floatValue)
+    }
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
@@ -52,7 +61,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
         ) {
 
         Text(
-            text = "$${mainScreenViewModel.totalSum.floatValue}",
+            text = "$${totalExpenses}",
             modifier = Modifier
                 .width(474.dp)
                 .height(77.dp),
@@ -66,6 +75,8 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
             Button(
                 onClick = {
                     mainScreenViewModel.changeExpenses()
+                    buttonPeriod = mainScreenViewModel.expensesPeriod.value
+                    totalExpenses = mainScreenViewModel.totalSum.floatValue
                 },
                 Modifier
                     .height(90.dp)
@@ -74,7 +85,7 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
                 shape = RoundedCornerShape(size = 15.dp),
 
                 ) {
-                Text(text = "Current period: ${mainScreenViewModel.expensesPeriod.value}", style = buttonTextStyle)
+                Text(text = "Current period: $buttonPeriod", style = buttonTextStyle)
             }
         }
 
@@ -102,10 +113,14 @@ fun MainScreen(navController: NavController, costAccounting: CostAccounting) {
                 .padding(19.dp, 17.dp)
 
         ) {
+            if (mainScreenViewModel.expensesPeriod.value != buttonPeriod) {
+                mainScreenViewModel.changeExpenses()
+            }
             items(mainScreenViewModel.currentExpenses.value.entries.toList()) { (category, value) ->
                 val dictionaryEntry = DictionaryEntry(category, value)
                 DictionaryEntryItem(dictionaryEntry)
             }
+
         }
         Spacer(Modifier.height(20.dp))
 
